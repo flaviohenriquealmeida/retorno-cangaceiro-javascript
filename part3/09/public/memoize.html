@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Memoize pattern</title>
+</head>
+<body>
+    <script>
+
+        const memoizer = fn => {
+            const cache = new Map();
+            
+            const newFn = (...args) => {
+                const key = JSON.stringify(args);
+                if (cache.has(key)) return cache.get(key);
+                const result = fn(...args);
+                cache.set(key, result);
+                return result;
+            };
+
+            newFn.clearCache = () => cache.clear();
+
+            return newFn;
+        };
+
+        const factorial = memoizer(
+            n => {
+                if (n <= 1) return 1;
+                return n * factorial(--n);
+            }
+        );
+
+        console.log('memoizedFactorial');
+        console.log(factorial(5));
+        console.log(factorial(3));
+        console.log(factorial(4));
+
+        const sumTwoNumbers = (num1, num2) => num1 + num2;
+
+        const memoizedSumTwoNumbers = memoizer(sumTwoNumbers);
+        console.log('memoizedSumTwoNumbers');
+        console.log(memoizedSumTwoNumbers(5, 5));
+        console.log(memoizedSumTwoNumbers(7, 2));
+        console.log(memoizedSumTwoNumbers(3, 3));
+
+        console.log(memoizedSumTwoNumbers(5, 5)); 
+
+        const requestHandler = res =>
+            res.ok ? res.json() : Promise.reject(res.statusText)
+
+        const getNotaFromId = id =>
+            fetch(`http://localhost:3000/notas/${id}`)
+                .then(requestHandler);
+
+        const memoizedGetNotaFromId = memoizer(getNotaFromId);
+
+        memoizedGetNotaFromId(1) // busca da API
+            .then(console.log)
+            .then(() => memoizedGetNotaFromId.clearCache())
+            .then(() => memoizedGetNotaFromId(1)) // busca do API!
+            .then(console.log)
+            .catch(console.log);
+    </script>
+</body>
+</html>
